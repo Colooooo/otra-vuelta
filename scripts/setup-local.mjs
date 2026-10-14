@@ -1,27 +1,21 @@
-import { existsSync, writeFileSync, readFileSync } from 'node:fs';
+import { existsSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import nextEnv from '@next/env';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 process.chdir(root);
-process.env.CLOUDFLARE_CF_FETCH_ENABLED ??= 'false';
-process.env.WRANGLER_SEND_METRICS ??= 'false';
-process.env.WRANGLER_WRITE_LOGS ??= 'false';
-process.env.WRANGLER_LOG_PATH ??= '.wrangler/logs';
+if (process.env.VERCEL) throw new Error('La preparación local no debe ejecutarse en Vercel.');
+mkdirSync('.data', { recursive: true });
+nextEnv.loadEnvConfig(root);
 
-if (!existsSync('.dev.vars')) {
-  writeFileSync('.dev.vars', `ADMIN_KEY=${randomBytes(24).toString('base64url')}\n`, { flag: 'wx' });
-  console.log('Se creó .dev.vars con la clave del panel de administración.');
-}
-if (!/^ADMIN_KEY=\S+/m.test(readFileSync('.dev.vars', 'utf8'))) {
-  throw new Error('Definí ADMIN_KEY en .dev.vars antes de abrir la tienda.');
+if (!process.env.ADMIN_KEY) {
+  const current = existsSync('.env.local') ? readFileSync('.env.local', 'utf8') : '';
+  const previousKey = existsSync('.dev.vars')
+    ? readFileSync('.dev.vars', 'utf8').match(/^ADMIN_KEY=(\S+)/m)?.[1] : undefined;
+  const key = previousKey || randomBytes(24).toString('base64url');
+  writeFileSync('.env.local', `${current}\nADMIN_KEY=${key}\n`);
+  console.log('Clave de administración guardada en .env.local.');
 }
 
-const result = spawnSync(process.execPath, [
-  'node_modules/wrangler/bin/wrangler.js', 'd1', 'migrations', 'apply', 'DB',
-  '--local', '--config', 'wrangler.jsonc', '--persist-to', '.wrangler/state',
-], { cwd: root, stdio: ['ignore', 'inherit', 'inherit'], env: process.env });
-if (result.error) throw result.error;
-if (result.status !== 0) process.exit(result.status ?? 1);
-console.log('Base de datos local lista. La clave del panel está en .dev.vars (ADMIN_KEY).');
+console.log('La clave del panel está en .env.local (ADMIN_KEY). Configurá DATABASE_URL para conectar Supabase.');

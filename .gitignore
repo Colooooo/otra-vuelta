@@ -4,6 +4,9 @@ dist/
 .vinext/
 .wrangler/
 .dev.vars
+.data/
+supabase/.temp/
+supabase/.branches/
 .env*
 !.env.example
 *.tsbuildinfo

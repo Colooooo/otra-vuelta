@@ -1,3 +1,0 @@
-# El comando npm run dev genera .dev.vars automáticamente si no existe.
-# Para configurar tu propia clave, copiá este archivo a .dev.vars y cambiá el valor.
-ADMIN_KEY=CAMBIAR-POR-UNA-CLAVE-PERSONAL

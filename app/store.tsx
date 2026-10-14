@@ -113,6 +113,7 @@ export default function Store() {
                     photo = new File([blob], 'foto.jpg', { type: 'image/jpeg' });
             }
             catch { }
+            if (photo.size > 4_000_000) throw Error('La foto debe pesar menos de 4 MB.');
             const form = new FormData();
             form.append('photo', photo);
             const r = await fetch('/api/upload', { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form });
