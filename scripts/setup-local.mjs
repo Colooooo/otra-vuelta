@@ -11,9 +11,7 @@ nextEnv.loadEnvConfig(root);
 
 if (!process.env.ADMIN_KEY) {
   const current = existsSync('.env.local') ? readFileSync('.env.local', 'utf8') : '';
-  const previousKey = existsSync('.dev.vars')
-    ? readFileSync('.dev.vars', 'utf8').match(/^ADMIN_KEY=(\S+)/m)?.[1] : undefined;
-  const key = previousKey || randomBytes(24).toString('base64url');
+  const key = randomBytes(24).toString('base64url');
   writeFileSync('.env.local', `${current}\nADMIN_KEY=${key}\n`);
   console.log('Clave de administración guardada en .env.local.');
 }

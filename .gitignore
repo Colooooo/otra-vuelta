@@ -1,9 +1,5 @@
 node_modules/
-dist/
 .next/
-.vinext/
-.wrangler/
-.dev.vars
 .data/
 supabase/.temp/
 supabase/.branches/

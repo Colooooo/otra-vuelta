@@ -15,7 +15,7 @@ Tienda de segunda mano con **Next.js**, React, TypeScript y Tailwind CSS 4. Cat�
 4. En Vercel → Settings → Environment Variables, cargá ADMIN_KEY, DATABASE_URL, SUPABASE_URL y SUPABASE_SECRET_KEY en los entornos correspondientes. Ninguna de estas claves lleva prefijo NEXT_PUBLIC_.
 5. Subí los cambios a GitHub y volvé a desplegar. El repositorio configura **Next.js**, Node.js **24.x**, build **npm run build** y salida **.next** en vercel.json. Quitá overrides antiguos incompatibles en el panel de Vercel.
 
-El build anterior usaba vinext y generaba un Worker Cloudflare. Vercel buscaba .next/routes-manifest.json. Ahora se ejecuta **next build**, que genera la salida esperada. No se necesita Turso, Vercel Blob ni una cuenta Cloudflare.
+El proyecto se instala con npm, usa Tailwind CSS para los estilos y Supabase para los datos y las fotos. **npm run build** ejecuta **next build** y genera la salida esperada por Vercel.
 
 La compilación no necesita credenciales ni modifica Supabase. Las API requieren el proyecto configurado y las migraciones aplicadas. No se aplica ninguna migración automáticamente durante builds, inicios o previews.
 
@@ -40,7 +40,7 @@ npm run db:migrate
 npm run dev
 ~~~
 
-Abrí **http://localhost:5173**. Si falta ADMIN_KEY, el primer inicio genera una clave en .env.local y conserva la anterior de .dev.vars si existía. Al pie de la web, elegí **Administrar tienda** e ingresá esa clave.
+Abrí **http://localhost:5173**. Si falta ADMIN_KEY, el primer inicio genera una clave en .env.local. Al pie de la web, elegí **Administrar tienda** e ingresá esa clave.
 
 El desarrollo utiliza el proyecto Supabase configurado. Si omitís ambas variables de Storage fuera de Vercel, las fotos se guardan en .data/photos para pruebas locales. En Vercel las credenciales de Supabase Storage son obligatorias y nunca se escriben fotos en disco efímero.
 
@@ -67,9 +67,5 @@ Para un cambio de esquema, creá un archivo con **npm run db:generate -- nombre_
 - supabase/migrations/: esquema Postgres, permisos y bucket.
 - vercel.json: despliegue.
 - .env.example: variables de configuración sin secretos reales.
-
-## Datos de la versión anterior
-
-Los datos de Cloudflare siguen intactos en .wrangler/state, pero **no se importan automáticamente** a Supabase. Conservá esa carpeta si ya cargaste artículos. Una migración de datos debe trasladar también las fotos y conservar sus identificadores.
 
 Moneda: **UYU**. Los pedidos se revisan en el panel, sin cobros ni notificaciones automáticas. El teléfono y la computadora comparten datos al acceder al mismo despliegue.
