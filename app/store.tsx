@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { readApiResponse } from '@/lib/api-response';
 import { ArrowUpRight, ArrowRight, ShoppingBag, X, Plus, Camera, Search, Leaf, RefreshCw, Check, Package, Lock, SlidersHorizontal, LogOut, Trash2 } from 'lucide-react';
 type Product = {
     id: string;
@@ -24,9 +25,8 @@ export default function Store() {
     const [success, setSuccess] = useState(''), [orderFilter, setOrderFilter] = useState('all'), [toast, setToast] = useState('');
     async function load(k = '') { setLoading(true); setError(''); try {
         const r = await fetch('/api/store' + (k ? '?admin=1' : ''), { headers: k ? { Authorization: `Bearer ${k}` } : {} });
-        const d: any = await r.json();
-        if (!r.ok)
-            throw Error(d.error);
+        const d = await readApiResponse(r, 'No pudimos cargar el catálogo. Intentá de nuevo en unos minutos.');
+        if (!Array.isArray(d.products) || !Array.isArray(d.orders)) throw Error('No pudimos cargar el catálogo. Intentá de nuevo en unos minutos.');
         setProducts(d.products);
         setOrders(d.orders || []);
         return true;
@@ -65,8 +65,7 @@ export default function Store() {
         setEditor(false);
         setLogin(false);
     } }; window.addEventListener('keydown', esc); return () => window.removeEventListener('keydown', esc); }, [busy, uploading]);
-    async function action(data: any) { const r = await fetch('/api/store', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` }, body: JSON.stringify(data) }); const d: any = await r.json(); if (!r.ok)
-        throw Error(d.error); return d; }
+    async function action(data: any) { const r = await fetch('/api/store', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` }, body: JSON.stringify(data) }); return readApiResponse(r, 'No pudimos guardar el cambio. Intentá de nuevo.'); }
     async function change(data: any) { setBusy(true); setError(''); try {
         await action(data);
         await load(key);
@@ -117,9 +116,7 @@ export default function Store() {
             const form = new FormData();
             form.append('photo', photo);
             const r = await fetch('/api/upload', { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form });
-            const d: any = await r.json();
-            if (!r.ok)
-                throw Error(d.error);
+            const d = await readApiResponse(r, 'No pudimos subir la foto. Intentá de nuevo.');
             urls.push(d.url);
         }
     }

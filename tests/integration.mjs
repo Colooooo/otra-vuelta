@@ -7,6 +7,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
+import { readApiResponse } from '../lib/api-response.ts';
+
+const fallback = 'No pudimos cargar el catálogo.';
+for (const response of [new Response(null, { status: 500 }), new Response('<html>Error</html>', { status: 502 }), new Response('{', { status: 200 })]) {
+  await assert.rejects(readApiResponse(response, fallback), { message: fallback });
+}
+await assert.rejects(readApiResponse(Response.json({ error: 'Acceso restringido.' }, { status: 401 }), fallback), { message: 'Acceso restringido.' });
+assert.deepEqual(await readApiResponse(Response.json({ products: [], orders: [] }), fallback), { products: [], orders: [] });
 
 const temporary = await mkdtemp(join(tmpdir(), 'otra-vuelta-test-'));
 const pg = await PGlite.create();
@@ -105,6 +113,25 @@ try {
   const admin = await (await fetch(`${base}/api/store?admin=1`, { headers: auth })).json();
   assert.equal(admin.products[0].status, 'sold');
   assert.equal(admin.orders.length, 2, 'Failed reservation must roll back the entire order');
+  const stopped = once(server, 'exit');
+  server.kill();
+  await stopped;
+  server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', String(port)], {
+    env: { ...env, DATABASE_URL: '' }, stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  server.stdout.resume();
+  server.stderr.resume();
+  const errorDeadline = Date.now() + 30_000;
+  let unavailable;
+  while (!unavailable) {
+    try { unavailable = await fetch(`${base}/api/store`); } catch { /* Wait for the server. */ }
+    if (Date.now() > errorDeadline || server.exitCode !== null) throw new Error('Server without database did not start');
+    if (!unavailable) await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  assert.equal(unavailable.status, 503, 'Database failures must return a structured API response');
+  const failure = await unavailable.json();
+  assert.equal(failure.error, 'No pudimos cargar el catálogo. Intentá de nuevo en unos minutos.');
+  assert.equal(JSON.stringify(failure).includes('DATABASE_URL'), false, 'Do not expose server configuration to visitors');
   console.log('OK: migrations, production pages, authentication, photos, concurrent reservations, rollback, cancellation and completion.');
 } finally {
   if (server && server.exitCode === null) {

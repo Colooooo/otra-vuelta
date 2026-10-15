@@ -8,10 +8,16 @@ function str(v: unknown, max: number) { return typeof v === 'string' ? v.trim().
 export async function GET(req: Request) {
  const db = database, isAdmin = new URL(req.url).searchParams.has('admin');
  if (isAdmin && !admin(req)) return json({ error: 'La clave de administración no es correcta.' }, 401);
+ try {
  const { results: products } = await db.prepare(isAdmin ? 'SELECT * FROM store.products ORDER BY created DESC' : "SELECT * FROM store.products WHERE status IN ('available','reserved') ORDER BY created DESC").all();
  let orders: any[] = [];
  if (isAdmin) { const o = await db.prepare('SELECT * FROM store.orders ORDER BY created DESC LIMIT 300').all(), i = await db.prepare('SELECT * FROM store.order_items').all(); orders = o.results.map((order: any) => ({ ...order, items: i.results.filter((item: any) => item.order_id === order.id) })); }
  return json({ products: products.map((p: any) => ({ ...p, images: JSON.parse(p.images) })), orders });
+ } catch (error) {
+  const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : 'DATABASE_ERROR';
+  console.error('No se pudo cargar el catálogo:', { code, databaseConfigured: Boolean(process.env.DATABASE_URL) });
+  return json({ error: 'No pudimos cargar el catálogo. Intentá de nuevo en unos minutos.' }, 503);
+ }
 }
 export async function POST(req: Request) {
  const origin = req.headers.get('Origin');
