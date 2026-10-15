@@ -44,7 +44,7 @@ export default function SalesPanel({ orders, products, detachedProducts, busy, o
       </motion.div>)}
       {detached.map(product => <motion.div key={product.id} layout={!reduce} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reduce ? 0 : .18 }}><SoldItemCard product={product} /></motion.div>)}
     </AnimatePresence></div>
-    {!shown.length && !detached.length && <div className="sales-blank"><span><ShoppingBag size={29} /></span><h3>{search ? 'No encontramos esa venta' : filter === 'all' ? 'Las próximas historias empiezan acá' : 'Todo al día por acá'}</h3><p>{search ? 'Probá con otro nombre de prenda o cliente.' : filter === 'confirmed' ? 'No tenés piezas pendientes de entrega.' : 'Cuando confirmes un pedido, sus prendas van a aparecer en esta sección.'}</p></div>}
+    {!shown.length && !detached.length && <div className="sales-blank"><span><ShoppingBag size={29} /></span><h3>{search ? 'No encontramos esa venta' : filter === 'all' ? 'Las próximas historias empiezan acá' : 'Todo al día por acá'}</h3><p>{search ? 'Probá con otro nombre de prenda o cliente.' : filter === 'confirmed' ? 'No tenés piezas pendientes de entrega.' : 'Cuando confirmes un pedido, el artículo aparecerá en esta sección.'}</p></div>}
     {detail && <SaleDetails order={detail} products={products} busy={busy} onClose={() => setDetailId(null)} onStatus={status => onStatus(detail, status)} onDelete={() => onDelete(detail)} />}
   </section>;
 }
