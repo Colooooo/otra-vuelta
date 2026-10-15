@@ -699,6 +699,21 @@ form small {
 .product-actions .delete-product:hover {
   background:#fff0ec;
 }
+.order .product-actions .delete-order {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:44px;
+  border-radius:10px;
+  color:#8d665c;
+  background:#fffdf8;
+  border:1px solid #e8e2d9;
+}
+.order .product-actions .delete-order:hover {
+  background:#faeae3;
+  color:#9a392b;
+}
 .orders {
   @apply grid grid-cols-2 gap-[20px] mt-[25px];
 

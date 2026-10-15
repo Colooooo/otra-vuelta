@@ -27,6 +27,15 @@ class Statement {
 
 export const database = {
   prepare(sql: string) { return new Statement(sql); },
+  async deleteCompletedOrder(id: string) {
+    return getClient().begin(async transaction => {
+      const order = await transaction`SELECT id FROM store.orders WHERE id=${id} AND status='completed' FOR UPDATE`;
+      if (!order.length) return false;
+      await transaction`DELETE FROM store.order_items WHERE order_id=${id}`;
+      await transaction`DELETE FROM store.orders WHERE id=${id}`;
+      return true;
+    });
+  },
   async batch(statements: Statement[]) {
     return getClient().begin(async transaction => {
       const results = [];

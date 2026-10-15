@@ -69,6 +69,10 @@ export async function POST(req: Request) {
    try { await db.batch(stmts); } catch { return json({ error: 'Una pieza acaba de ser reservada por otra persona. Actualizá tu selección.' },409); }
    return json({ id, total });
   }
+  if (b.action === 'deleteOrder') {
+   const deleted = await db.deleteCompletedOrder(str(b.id, 50));
+   return deleted ? json({ ok: true }) : json({ error: 'Solo se pueden eliminar pedidos entregados. El pedido ya no existe o todavía no fue marcado como entregado.' }, 409);
+  }
   if (b.action === 'orderStatus') {
    if (!['confirmed','completed','cancelled'].includes(b.status)) return json({ error: 'Estado inválido.' },400);
    const order: any = await db.prepare('SELECT * FROM store.orders WHERE id=?').bind(str(b.id,50)).first();
