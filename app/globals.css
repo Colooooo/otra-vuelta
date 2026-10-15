@@ -684,13 +684,20 @@ form small {
   border-top:none;
 }
 .product-actions {
-  @apply flex gap-[10px] mt-[16px];
+  @apply flex flex-wrap gap-[10px] mt-[16px];
 
 }
 .product-actions button:not(.primary) {
   @apply rounded-[5px] text-[11px];
   padding:9px 15px;
   border:1px solid #cdd6c0;
+}
+.product-actions .delete-product {
+  color:#a13527;
+  border-color:#dfb5ad;
+}
+.product-actions .delete-product:hover {
+  background:#fff0ec;
 }
 .orders {
   @apply grid grid-cols-2 gap-[20px] mt-[25px];
@@ -771,23 +778,16 @@ form small {
   @apply absolute inset-0 opacity-[0] cursor-pointer;
 
 }
-.upload-thumbs>div {
-  @apply relative w-[80px] h-[95px];
-
-}
-.upload-thumbs img {
-  @apply rounded-[5px];
-
-}
-.upload-thumbs button {
-  @apply absolute right-[3px] top-[3px] rounded-full p-[4px];
-  background:#fff;
-}
-.upload-thumbs small {
-  @apply absolute bottom-[2px] left-[3px] text-[8px] rounded-[3px];
-  background:#fff;
-  padding:2px 5px;
-}
+.photo-sort-hint { @apply mt-3 mb-3 text-xs; color:var(--muted); }
+.photo-sorter { @apply flex flex-wrap gap-3 mb-5; }
+.sortable-photo { @apply relative w-24 h-32; }
+.sortable-photo.dragging { opacity:.8; }
+.photo-drag-handle { @apply relative block w-full h-full overflow-hidden rounded-md; cursor:grab; touch-action:none; }
+.photo-drag-handle:active { cursor:grabbing; }
+.photo-drag-handle:focus-visible { outline:3px solid var(--green); outline-offset:3px; }
+.photo-drag-handle img { @apply w-full h-full object-cover; user-select:none; pointer-events:none; }
+.photo-position { @apply absolute bottom-1 left-1 rounded flex items-center gap-1 px-1.5 py-1 text-[10px]; background:#fff; pointer-events:none; }
+.photo-remove { @apply absolute right-1 top-1 rounded-full p-1.5; background:#fff; }
 .toast {
   @apply fixed bottom-[25px] left-[50%] rounded-[6px] z-[90] text-[12px] flex items-center gap-[12px] min-w-[260px];
   transform:translateX(-50%);

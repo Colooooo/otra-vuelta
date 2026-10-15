@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Otra Vuelta · Segunda mano, nuevas historias",
+  title: "Luciana Second Hand",
   description: "Descubrí piezas únicas de segunda mano y reservá tus favoritas.",
   icons: {
     icon: "/favicon.svg",

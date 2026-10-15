@@ -38,6 +38,17 @@ export async function POST(req: Request) {
    } else await db.prepare('INSERT INTO store.products (id,title,description,category,size,condition,price,images,status,created) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id,title,description,b.category,size,condition,price,JSON.stringify(b.images),'available',new Date().toISOString()).run();
    return json({ id });
   }
+  if (b.action === 'deleteProduct') {
+   const id = str(b.id, 50);
+   try {
+    const result = await db.prepare("DELETE FROM store.products WHERE id=? AND status IN ('available','hidden') AND NOT EXISTS (SELECT 1 FROM store.order_items WHERE product_id=store.products.id)").bind(id).run();
+    if (result.meta.changes) return json({ ok: true });
+   } catch (error) {
+    // Una reserva concurrente también queda protegida por la clave foránea.
+    if (!(typeof error === 'object' && error !== null && 'code' in error && error.code === '23503')) throw error;
+   }
+   return json({ error: 'No se puede eliminar este artículo: ya no existe, está reservado o vendido, o pertenece a un pedido. Si está disponible, podés ocultarlo para conservar el historial.' }, 409);
+  }
   if (b.action === 'visibility') {
    if (!['available','hidden'].includes(b.status)) return json({ error: 'Estado inválido.' },400);
    const r = await db.prepare("UPDATE store.products SET status=? WHERE id=? AND status IN ('available','hidden')").bind(b.status,str(b.id,50)).run();
