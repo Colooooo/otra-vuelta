@@ -8,6 +8,25 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import { readApiResponse } from '../lib/api-response.ts';
+import { getStoreSections } from '../lib/store-sections.ts';
+
+const sectionProducts = [
+  { id: 'available', status: 'available' }, { id: 'hidden', status: 'hidden' },
+  { id: 'pending', status: 'reserved' }, { id: 'confirmed', status: 'reserved' },
+  { id: 'completed', status: 'sold' }, { id: 'retained', status: 'sold' },
+];
+const sectionOrders = ['pending', 'confirmed', 'completed', 'cancelled'].map(status => ({ id: status, status, items: [{ product_id: status }] }));
+const sections = getStoreSections(sectionProducts, sectionOrders);
+assert.deepEqual(sections.activeProducts.map(product => product.id), ['available', 'hidden', 'pending']);
+assert.deepEqual(sections.pendingOrders.map(order => order.id), ['pending', 'cancelled']);
+assert.deepEqual(sections.salesOrders.map(order => order.id), ['confirmed', 'completed']);
+assert.deepEqual(sections.detachedSoldProducts.map(product => product.id), ['retained']);
+assert.equal(sections.soldPieceCount, 3);
+const afterRemovingOrder = getStoreSections(sectionProducts, sectionOrders.filter(order => order.status !== 'completed'));
+assert.deepEqual(afterRemovingOrder.detachedSoldProducts.map(product => product.id), ['completed', 'retained']);
+const afterCancelling = getStoreSections(sectionProducts.map(product => product.id === 'confirmed' ? { ...product, status: 'available' } : product), sectionOrders.map(order => order.status === 'confirmed' ? { ...order, status: 'cancelled' } : order));
+assert.equal(afterCancelling.activeProducts.some(product => product.id === 'confirmed'), true);
+assert.equal(afterCancelling.salesOrders.some(order => order.id === 'confirmed'), false);
 
 const fallback = 'No pudimos cargar el catálogo.';
 for (const response of [new Response(null, { status: 500 }), new Response('<html>Error</html>', { status: 502 }), new Response('{', { status: 200 })]) {
@@ -117,6 +136,8 @@ try {
   assert.equal((await action({ action: 'deleteOrder', id: reserved.id }, false)).status, 401);
   assert.equal((await action({ action: 'deleteOrder', id: reserved.id })).status, 409, 'Pending orders cannot be deleted');
   assert.equal((await action({ action: 'deleteProduct', id })).status, 409, 'Reserved products cannot be deleted');
+  assert.equal((await action({ action: 'orderStatus', id: reserved.id, status: 'confirmed' })).status, 200);
+  assert.equal((await (await fetch(`${base}/api/store`)).json()).products.length, 0, 'Confirmed pieces move out of the public catalog');
   const cancel = await action({ action: 'orderStatus', id: reserved.id, status: 'cancelled' });
   assert.equal(cancel.status, 200);
   assert.equal((await (await fetch(`${base}/api/store`)).json()).products[0].status, 'available');
@@ -125,6 +146,7 @@ try {
   const replacement = await (await action(order, false)).json();
   assert.equal((await action({ action: 'orderStatus', id: replacement.id, status: 'completed' })).status, 409);
   assert.equal((await action({ action: 'orderStatus', id: replacement.id, status: 'confirmed' })).status, 200);
+  assert.equal((await (await fetch(`${base}/api/store`)).json()).products.length, 0);
   assert.equal((await action({ action: 'deleteOrder', id: replacement.id })).status, 409, 'Confirmed orders cannot be deleted');
   assert.equal((await action({ action: 'orderStatus', id: replacement.id, status: 'completed' })).status, 200);
   assert.equal((await (await fetch(`${base}/api/store`)).json()).products.length, 0);
